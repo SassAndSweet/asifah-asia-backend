@@ -145,11 +145,16 @@ def load_threat_cache_redis(target, days=7):
 
 
 def save_threat_cache_redis(target, data, days=7):
-    """Save threat cache to Redis with TTL."""
+    """Save threat cache to Redis with TTL.
+    Upstash REST SET with EX: POST /set/key value EX ttl
+    """
     key = f"{THREAT_REDIS_PREFIX}{target}_{days}d"
     try:
-        payload = json.dumps(data)
-        _redis_request('POST', f"/set/{key}/{THREAT_CACHE_TTL}", json=payload)
+        payload = json.dumps(data, default=str)
+        # Upstash REST pipeline: SET key value EX ttl
+        _redis_request('POST', f"/pipeline", json=[
+            ["SET", key, payload, "EX", THREAT_CACHE_TTL]
+        ])
     except Exception as e:
         print(f"[Redis] Save error: {str(e)[:100]}")
 
@@ -272,7 +277,7 @@ def _refresh_all_caches():
                 print(f"[Background Refresh] ✓ {target} cached (probability: {data.get('probability', '?')}%)")
             except Exception as e:
                 print(f"[Background Refresh] ✗ {target} failed: {e}")
-            time.sleep(5)
+            time.sleep(2)
 
         try:
             print("[Background Refresh] Refreshing NOTAMs via FAA...")
@@ -652,7 +657,7 @@ def fetch_gdelt_articles(query, days=7, language='eng'):
         resp = None
         for attempt in range(2):
             try:
-                resp = requests.get(GDELT_BASE_URL, params=params, timeout=60)
+                resp = requests.get(GDELT_BASE_URL, params=params, timeout=15)
                 if resp.status_code == 200:
                     break
             except requests.Timeout:
