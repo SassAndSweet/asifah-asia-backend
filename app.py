@@ -145,16 +145,11 @@ def load_threat_cache_redis(target, days=7):
 
 
 def save_threat_cache_redis(target, data, days=7):
-    """Save threat cache to Redis with TTL.
-    Upstash REST SET with EX: POST /set/key value EX ttl
-    """
+    """Save threat cache to Redis with TTL."""
     key = f"{THREAT_REDIS_PREFIX}{target}_{days}d"
     try:
         payload = json.dumps(data, default=str)
-        # Upstash REST pipeline: SET key value EX ttl
-        _redis_request('POST', f"/pipeline", json=[
-            ["SET", key, payload, "EX", THREAT_CACHE_TTL]
-        ])
+        _redis_request('POST', f"/set/{key}/{THREAT_CACHE_TTL}", json=payload)
     except Exception as e:
         print(f"[Redis] Save error: {str(e)[:100]}")
 
@@ -608,6 +603,41 @@ ESCALATION_KEYWORDS = [
 
 
 # ========================================
+# DATE PARSING HELPER
+# ========================================
+
+def parse_pub_date(pub_str):
+    """
+    Robustly parse a publication date string into a UTC-aware datetime.
+    Handles ISO 8601, RFC 2822, and GDELT seendate formats.
+    Returns datetime or None.
+    """
+    if not pub_str:
+        return None
+    try:
+        # ISO 8601 / RFC 3339 (most common: NewsAPI, Reddit)
+        return datetime.fromisoformat(pub_str.replace('Z', '+00:00'))
+    except ValueError:
+        pass
+    try:
+        # RFC 2822 (RSS feeds): "Thu, 12 Mar 2026 12:28:03 GMT"
+        from email.utils import parsedate_to_datetime
+        return parsedate_to_datetime(pub_str).astimezone(timezone.utc)
+    except Exception:
+        pass
+    try:
+        # GDELT seendate format: "20260312T122803Z" or "20260312122803"
+        clean = pub_str.replace('T', '').replace('Z', '').replace('-', '').replace(':', '')
+        if len(clean) >= 14:
+            return datetime.strptime(clean[:14], '%Y%m%d%H%M%S').replace(tzinfo=timezone.utc)
+        elif len(clean) == 8:
+            return datetime.strptime(clean[:8], '%Y%m%d').replace(tzinfo=timezone.utc)
+    except Exception:
+        pass
+    return None
+
+
+# ========================================
 # ARTICLE FETCHING — NEWS API
 # ========================================
 
@@ -819,7 +849,11 @@ def calculate_threat_probability(articles, days=7, target=None):
         pub_str = article.get('publishedAt', '')
         try:
             if pub_str:
-                pub_date = datetime.fromisoformat(pub_str.replace('Z', '+00:00'))
+                pub_date = parse_pub_date(pub_str)
+                if pub_date is None:
+                    raise ValueError("unparseable date")
+                if pub_date.tzinfo is None:
+                    pub_date = pub_date.replace(tzinfo=timezone.utc)
                 age_hours = (now - pub_date).total_seconds() / 3600
                 if age_hours <= 24:
                     time_decay = 1.0
@@ -868,12 +902,15 @@ def calculate_threat_probability(articles, days=7, target=None):
         }, 'top_contributors': []}
 
     weighted_score = sum(s['contribution'] for s in scored_articles)
-    recent_count = sum(1 for s in scored_articles
-                       if (now - datetime.fromisoformat(
-                           (s['article'].get('publishedAt', '') or '').replace('Z', '+00:00')
-                           if s['article'].get('publishedAt') else now.isoformat()
-                       ).replace(tzinfo=timezone.utc if '+' not in (s['article'].get('publishedAt', '') or '') else None)
-                       ).total_seconds() / 3600 <= 48)
+    def _article_age_hours(s):
+        pd = parse_pub_date(s['article'].get('publishedAt', '') or '')
+        if pd is None:
+            return 999
+        if pd.tzinfo is None:
+            pd = pd.replace(tzinfo=timezone.utc)
+        return (now - pd).total_seconds() / 3600
+
+    recent_count = sum(1 for s in scored_articles if _article_age_hours(s) <= 48)
 
     deesc_count = sum(1 for s in scored_articles if s['deescalation'])
     older_count = len(scored_articles) - recent_count
