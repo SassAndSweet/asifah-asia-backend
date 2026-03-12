@@ -44,6 +44,9 @@ except ImportError:
     TELEGRAM_AVAILABLE = False
     print("[Asia Backend] ⚠️ Telegram signals not available")
 
+# In-memory Telegram cache — fetched ONCE per refresh cycle, shared across all country scans
+_telegram_cache = {'messages': [], 'fetched_at': None, 'ttl_seconds': 3600}
+
 app = Flask(__name__)
 # Belt-and-suspenders CORS: both flask_cors AND after_request handler
 CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
@@ -1350,11 +1353,25 @@ def _run_threat_scan(target, days=7):
         except Exception as e:
             print(f"South Korea RSS error: {e}")
 
-    # Telegram
+    # Telegram — uses shared in-memory cache to avoid fetching 8x per refresh cycle
     telegram_articles = []
     if TELEGRAM_AVAILABLE:
         try:
-            telegram_msgs = fetch_asia_telegram_signals(hours_back=days * 24, include_extended=True)
+            now = datetime.now(timezone.utc)
+            cache_age_secs = (
+                (now - _telegram_cache['fetched_at']).total_seconds()
+                if _telegram_cache['fetched_at'] else 9999
+            )
+            if cache_age_secs > _telegram_cache['ttl_seconds'] or not _telegram_cache['messages']:
+                print(f"[Telegram Cache] Fetching fresh (last fetch: {int(cache_age_secs)}s ago)")
+                _telegram_cache['messages'] = fetch_asia_telegram_signals(
+                    hours_back=max(days * 24, 168), include_extended=True
+                )
+                _telegram_cache['fetched_at'] = now
+            else:
+                print(f"[Telegram Cache] Using cached messages ({int(cache_age_secs)}s old, {len(_telegram_cache['messages'])} msgs)")
+
+            telegram_msgs = _telegram_cache['messages']
             if telegram_msgs:
                 target_kws = [kw.lower() for kw in TARGET_KEYWORDS.get(target, {}).get('keywords', [])]
                 target_name = target.replace('_', ' ').lower()
