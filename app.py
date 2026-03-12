@@ -1698,10 +1698,11 @@ def api_asia_threat(target):
 def api_asia_dashboard():
     """
     Single batch endpoint — returns all country scores in one response.
-    Returns cached data by default. Pass ?force=true to trigger fresh scans.
+    ALWAYS returns immediately from cache. Never runs live scans on this endpoint.
+    Cache is populated by the background refresh thread every 4 hours.
+    Pass ?force=true ONLY via the individual /api/asia/threat/<target> endpoints.
     """
     try:
-        force = request.args.get('force', 'false').lower() == 'true'
         days = int(request.args.get('days', 7))
         targets = list(TARGET_KEYWORDS.keys())
 
@@ -1709,52 +1710,45 @@ def api_asia_dashboard():
             'success': True,
             'timestamp': datetime.now(timezone.utc).isoformat(),
             'version': '1.0.0-asia',
-            'countries': {}
+            'countries': {},
+            'cache_cold': False
         }
 
-        all_cached = True
+        cold_count = 0
 
         for target in targets:
             cache_key = f'threat_{target}_{days}d'
+            cached = cache_get(cache_key)
 
-            if not force:
-                cached = cache_get(cache_key)
-                if cached:
-                    dashboard['countries'][target] = {
-                        'probability': cached.get('probability', 0),
-                        'momentum': cached.get('momentum', 'stable'),
-                        'timeline': cached.get('timeline', 'Unknown'),
-                        'confidence': cached.get('confidence', 'Low'),
-                        'total_articles': cached.get('total_articles', 0),
-                        'flight_disruptions': len(cached.get('flight_disruptions', [])),
-                        'cached': True,
-                        'cache_age_seconds': int(cache_age(cache_key) or 0)
-                    }
-                    continue
-
-            all_cached = False
-            if not check_rate_limit():
+            if cached:
                 dashboard['countries'][target] = {
-                    'probability': 0,
-                    'error': 'Rate limited',
-                    'cached': False
+                    'probability': cached.get('probability', 0),
+                    'momentum': cached.get('momentum', 'stable'),
+                    'timeline': cached.get('timeline', 'Unknown'),
+                    'confidence': cached.get('confidence', 'Low'),
+                    'total_articles': cached.get('total_articles', 0),
+                    'flight_disruptions': len(cached.get('flight_disruptions', [])),
+                    'cached': True,
+                    'cached_at': cached.get('cached_at', None),
+                    'cache_age_seconds': int(cache_age(cache_key) or 0)
                 }
-                continue
+            else:
+                # Cache cold — return skeleton immediately, background thread will populate
+                cold_count += 1
+                dashboard['countries'][target] = {
+                    'probability': None,
+                    'momentum': 'unknown',
+                    'timeline': 'Awaiting first scan',
+                    'confidence': 'None',
+                    'total_articles': 0,
+                    'flight_disruptions': 0,
+                    'cached': False,
+                    'warming': True
+                }
 
-            data = _run_threat_scan(target, days=days)
-            cache_set(cache_key, data)
-            dashboard['countries'][target] = {
-                'probability': data.get('probability', 0),
-                'momentum': data.get('momentum', 'stable'),
-                'timeline': data.get('timeline', 'Unknown'),
-                'confidence': data.get('confidence', 'Low'),
-                'total_articles': data.get('total_articles', 0),
-                'flight_disruptions': len(data.get('flight_disruptions', [])),
-                'cached': False,
-                'cache_age_seconds': 0
-            }
-
-        dashboard['all_cached'] = all_cached
+        dashboard['all_cached'] = cold_count == 0
+        dashboard['cache_cold'] = cold_count > 0
+        dashboard['cold_count'] = cold_count
         return jsonify(dashboard)
 
     except Exception as e:
