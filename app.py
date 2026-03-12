@@ -45,7 +45,8 @@ except ImportError:
     print("[Asia Backend] ⚠️ Telegram signals not available")
 
 app = Flask(__name__)
-# CORS handled by after_request handler
+# Belt-and-suspenders CORS: both flask_cors AND after_request handler
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
 
 # ========================================
 # CONFIGURATION
@@ -1108,50 +1109,87 @@ def scan_asia_notams():
 # ========================================
 
 def _run_travel_advisory_scan():
-    """Fetch State Dept travel advisories for all Asia targets."""
-    advisories = {}
+    """Fetch all travel advisories from State Dept and extract Asia-Pacific targets."""
+    print("[Asia] Travel Advisories: Fetching from State Dept API...")
+    results = {}
+
     try:
-        response = requests.get(TRAVEL_ADVISORY_API, timeout=15)
-        if response.status_code == 200:
-            data = response.json()
-            all_advisories = data if isinstance(data, list) else data.get('advisories', [])
-            for country, codes in TRAVEL_ADVISORY_CODES.items():
-                for adv in all_advisories:
-                    if adv.get('countryCode') in codes:
-                        level = adv.get('advisoryLevel', 1)
-                        level_info = TRAVEL_ADVISORY_LEVELS.get(level, TRAVEL_ADVISORY_LEVELS[1])
-                        slug = TRAVEL_ADVISORY_SLUGS.get(country, country.replace('_', '-'))
-                        # Check if recently changed (within 30 days)
-                        recently_changed = False
-                        updated_str = adv.get('dateLastUpdated', '')
-                        if updated_str:
-                            try:
-                                from datetime import timezone as tz
-                                updated_dt = datetime.fromisoformat(updated_str.replace('Z', '+00:00'))
-                                delta = datetime.now(timezone.utc) - updated_dt
-                                recently_changed = delta.days <= 30
-                            except Exception:
-                                pass
-                        advisories[country] = {
-                            'level': level,
-                            'level_label': level_info['label'],
-                            'level_short': level_info['short'],
-                            'level_color': level_info['color'],
-                            'short_summary': adv.get('message', level_info['label']),
-                            'title': f"{country.replace('_',' ').title()} Travel Advisory",
-                            'link': f"https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/{slug}.html",
-                            'updated': updated_str,
-                            'recently_changed': recently_changed,
-                        }
-                        break
+        response = requests.get(TRAVEL_ADVISORY_API, timeout=20)
+        if response.status_code != 200:
+            print(f"[Asia] Travel Advisories: HTTP {response.status_code}")
+            return {'success': False, 'error': f'HTTP {response.status_code}', 'advisories': {}}
+
+        all_advisories = response.json()
+        print(f"[Asia] Travel Advisories: Got {len(all_advisories)} total advisories")
+
+        for target, codes in TRAVEL_ADVISORY_CODES.items():
+            for advisory in all_advisories:
+                cats = advisory.get('Category', [])
+                if any(code in cats for code in codes):
+                    title = advisory.get('Title', '')
+                    level_match = re.search(r'Level\s+(\d)', title)
+                    level = int(level_match.group(1)) if level_match else None
+                    published = advisory.get('Published', '')
+                    updated = advisory.get('Updated', '')
+                    link = advisory.get('Link', '')
+                    summary_html = advisory.get('Summary', '')
+
+                    # Extract first paragraph as short summary
+                    short_summary = ''
+                    summary_match = re.search(r'<p[^>]*>(.*?)</p>', summary_html, re.DOTALL)
+                    if summary_match:
+                        short_summary = re.sub(r'<[^>]+>', '', summary_match.group(1)).strip()
+
+                    # Detect if recently changed (within last 30 days)
+                    recently_changed = False
+                    change_description = ''
+                    try:
+                        updated_dt = datetime.fromisoformat(updated.replace('Z', '+00:00'))
+                        age_days = (datetime.now(timezone.utc) - updated_dt).days
+                        recently_changed = age_days <= 30
+
+                        change_match = re.search(
+                            r'(advisory level was (?:increased|decreased|raised|lowered|changed).*?\.)',
+                            summary_html, re.IGNORECASE
+                        )
+                        if change_match:
+                            change_description = re.sub(r'<[^>]+>', '', change_match.group(1)).strip()
+                        elif recently_changed:
+                            if 'no change' in summary_html.lower() or 'no changes to the advisory level' in summary_html.lower():
+                                change_description = 'Updated (level unchanged)'
+                            else:
+                                change_description = f'Updated {age_days} day{"s" if age_days != 1 else ""} ago'
+                    except Exception:
+                        pass
+
+                    level_info = TRAVEL_ADVISORY_LEVELS.get(level, {})
+
+                    results[target] = {
+                        'country_code': cats[0] if cats else '',
+                        'title': title,
+                        'level': level,
+                        'level_label': level_info.get('label', 'Unknown'),
+                        'level_short': level_info.get('short', 'Unknown'),
+                        'level_color': level_info.get('color', '#6b7280'),
+                        'published': published,
+                        'updated': updated,
+                        'recently_changed': recently_changed,
+                        'change_description': change_description,
+                        'short_summary': short_summary,
+                        'link': link
+                    }
+                    print(f"[Asia] Travel Advisory: {target} -> Level {level} ({level_info.get('short', '?')})")
+                    break
+
     except Exception as e:
-        print(f"[Asia Travel Advisory] Error: {str(e)[:100]}")
+        print(f"[Asia] Travel Advisories error: {e}")
+        return {'success': False, 'error': str(e), 'advisories': {}}
 
     return {
         'success': True,
         'timestamp': datetime.now(timezone.utc).isoformat(),
-        'advisories': advisories,
-        'version': '1.0.0-asia',
+        'advisories': results,
+        'version': '1.0.0-asia'
     }
 
 
@@ -1520,6 +1558,18 @@ def _run_flight_scan():
 # ========================================
 # API ENDPOINTS
 # ========================================
+
+@app.route('/', defaults={'path': ''}, methods=['OPTIONS'])
+@app.route('/<path:path>', methods=['OPTIONS'])
+def handle_options(path):
+    """Respond to CORS preflight requests."""
+    from flask import make_response
+    r = make_response('', 204)
+    r.headers['Access-Control-Allow-Origin'] = '*'
+    r.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    r.headers['Access-Control-Allow-Methods'] = 'GET,OPTIONS'
+    r.headers['Access-Control-Max-Age'] = '86400'
+    return r
 
 @app.after_request
 def add_cors_headers(response):
