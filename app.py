@@ -1411,6 +1411,19 @@ def _run_threat_scan(target, days=7):
     momentum = scoring_result['momentum']
     breakdown = scoring_result['breakdown']
 
+    # Military posture bonus — add to base probability
+    military_posture = {}
+    military_bonus = 0
+    if MILITARY_TRACKER_AVAILABLE:
+        try:
+            military_posture = get_military_posture(target)
+            military_bonus = military_posture.get('military_bonus', 0)
+            if military_bonus > 0:
+                print(f"[Asia Threat] {target}: military bonus +{military_bonus} (alert: {military_posture.get('alert_level','normal')})")
+            probability = min(100, probability + military_bonus)
+        except Exception as e:
+            print(f"[Asia Threat] {target}: military posture error — {str(e)[:80]}")
+
     # Timeline
     if probability < 30:
         timeline = "180+ Days (Low priority)"
@@ -1493,6 +1506,8 @@ def _run_threat_scan(target, days=7):
         'days_analyzed': days,
         'cached_at': datetime.now(timezone.utc).isoformat(),
         'version': '1.0.0-asia',
+        'military_posture': military_posture,
+        'military_bonus': military_bonus,
     }
 
 
