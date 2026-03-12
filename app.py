@@ -392,16 +392,34 @@ TARGET_KEYWORDS = {
 
     'afghanistan': {
         'keywords': [
+            # Core country/actors
             'afghanistan', 'afghan', 'kabul', 'taliban', 'kandahar',
-            'isis-k', 'iskp', 'islamic state khorasan',
-            'national resistance front', 'panjshir',
-            'afghanistan pakistan border', 'ttp', 'tehrik-i-taliban',
-            'balochistan afghanistan', 'afghanistan iran',
-            'afghanistan collapse', 'afghanistan famine',
+            'helmand', 'nangarhar', 'kunduz', 'herat', 'jalalabad',
+            # Militant groups
+            'isis-k', 'iskp', 'islamic state khorasan', 'is-khorasan',
+            'al-qaeda afghanistan', 'haqqani network', 'sirajuddin haqqani',
+            'tehrik-i-taliban', 'ttp', 'pakistani taliban',
+            'national resistance front', 'nrf afghanistan', 'panjshir resistance',
+            # Pakistan cross-border strikes
+            'pakistan strikes afghanistan', 'pakistan bombs afghanistan',
+            'pakistan airstrike afghanistan', 'pakistan shelling afghanistan',
+            'pakistan afghanistan border attack', 'pakistan afghan border clash',
+            'pakistan military operation afghanistan', 'durand line',
+            'pakistan afghanistan tension', 'pak-afghan border',
+            'torkham border', 'khyber pass attack',
+            # Taliban ops / instability
+            'taliban crackdown', 'taliban execution', 'taliban attack',
+            'taliban bomb', 'kabul blast', 'kabul explosion', 'kabul attack',
+            'suicide bomb afghanistan', 'IED afghanistan',
+            'afghanistan airstrike', 'afghanistan bomb blast',
+            'afghanistan humanitarian crisis', 'afghanistan famine',
+            # Iran border
+            'afghanistan iran border', 'iran afghanistan clash',
         ],
         'reddit_keywords': [
             'afghanistan', 'taliban', 'isis-k', 'kabul',
-            'afghan military', 'resistance front',
+            'pakistan afghanistan', 'afghan conflict',
+            'resistance front', 'haqqani', 'iskp',
         ],
     },
 
@@ -479,11 +497,21 @@ TARGET_KEYWORDS = {
             'pakistan airspace', 'pakistan us military',
             'pakistan china military', 'cpec security',
             'pakistan coup', 'pakistan imf crisis',
-            'pakistan afghanistan border',
+            # Cross-border Afghanistan operations — key operational signal
+            'pakistan strikes afghanistan', 'pakistan bombs afghanistan',
+            'pakistan airstrike afghanistan', 'pakistan shelling afghanistan',
+            'pakistan military operation afghanistan', 'pak-afghan border',
+            'pakistan afghanistan border attack', 'durand line dispute',
+            'afghanistan retaliates pakistan', 'pak-afghan war',
+            'pakistan jet afghanistan', 'pakistan bombs khost',
+            'pakistan bombs paktika', 'pakistan bombs kunar',
+            # Domestic instability
+            'pakistan army operation', 'ttp pakistan', 'baloch militant',
+            'pakistan bomb blast', 'pakistan suicide bomb',
         ],
         'reddit_keywords': [
             'pakistan military', 'pakistan army', 'india pakistan',
-            'kashmir', 'pakistan', 'pakistan news',
+            'kashmir', 'pakistan afghanistan', 'ttp', 'pakistan news',
         ],
     },
 
@@ -776,6 +804,34 @@ def fetch_google_news_rss(query, source_name, lang='en', gl='US'):
                     })
     except Exception as e:
         print(f"[Asia RSS] {source_name} error: {str(e)[:100]}")
+    return articles
+
+
+def fetch_direct_rss(url, source_name, weight=0.85, max_items=15):
+    """Fetch articles directly from an RSS feed URL (not Google News)."""
+    articles = []
+    try:
+        response = requests.get(url, timeout=15, headers={'User-Agent': 'Mozilla/5.0'})
+        if response.status_code == 200:
+            root = ET.fromstring(response.content)
+            items = root.findall('.//item')
+            for item in items[:max_items]:
+                title_elem = item.find('title')
+                link_elem = item.find('link')
+                pub_elem = item.find('pubDate')
+                desc_elem = item.find('description')
+                if title_elem is not None and title_elem.text:
+                    articles.append({
+                        'title': title_elem.text.strip(),
+                        'description': (desc_elem.text or title_elem.text or '').strip(),
+                        'url': link_elem.text.strip() if link_elem is not None and link_elem.text else '',
+                        'publishedAt': pub_elem.text if pub_elem is not None else '',
+                        'source': {'name': source_name},
+                        'content': title_elem.text.strip(),
+                        'source_weight_override': weight,
+                    })
+    except Exception as e:
+        print(f"[Direct RSS] {source_name} error: {str(e)[:100]}")
     return articles
 
 
@@ -1178,18 +1234,54 @@ def _run_threat_scan(target, days=7):
     if target == 'pakistan':
         try:
             rss_articles.extend(fetch_google_news_rss(
-                'Pakistan military OR Pakistan army OR India Pakistan border',
+                'Pakistan military OR Pakistan strikes Afghanistan OR Pakistan army operation OR TTP attack',
                 'Pakistan News'))
         except Exception as e:
             print(f"Pakistan RSS error: {e}")
+        # Dawn — Pakistan's leading English newspaper
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://www.dawn.com/feeds/home',
+                'Dawn', weight=0.9))
+        except Exception as e:
+            print(f"Dawn RSS error: {e}")
+        # Geo News
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://www.geo.tv/rss/10',
+                'Geo News', weight=0.8))
+        except Exception as e:
+            print(f"Geo News RSS error: {e}")
 
     if target == 'afghanistan':
+        # Google News — English operational reporting
         try:
             rss_articles.extend(fetch_google_news_rss(
-                'Afghanistan Taliban OR ISIS-K OR Kabul attack OR Afghanistan military',
+                'Afghanistan Taliban attack OR Pakistan strikes Afghanistan OR ISIS-K Kabul OR Afghan border',
                 'Afghanistan News'))
         except Exception as e:
             print(f"Afghanistan RSS error: {e}")
+        # Tolo News — Afghan broadcaster
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://tolonews.com/rss.xml',
+                'Tolo News', weight=0.85))
+        except Exception as e:
+            print(f"Tolo News RSS error: {e}")
+        # Khaama Press — Afghan news agency
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://www.khaama.com/feed/',
+                'Khaama Press', weight=0.85))
+        except Exception as e:
+            print(f"Khaama Press RSS error: {e}")
+        # Dawn — Pakistan/Afghan cross-border coverage
+        try:
+            rss_articles.extend(fetch_google_news_rss(
+                'Pakistan Afghanistan border attack OR Durand line OR Afghan Taliban Pakistan',
+                'Dawn Pakistan'))
+        except Exception as e:
+            print(f"Dawn RSS error: {e}")
 
     if target == 'india':
         try:
