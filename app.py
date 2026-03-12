@@ -44,6 +44,14 @@ except ImportError:
     TELEGRAM_AVAILABLE = False
     print("[Asia Backend] ⚠️ Telegram signals not available")
 
+try:
+    from military_tracker import scan_military_posture, get_military_posture
+    MILITARY_TRACKER_AVAILABLE = True
+    print("[Asia Backend] ✅ Military tracker available")
+except ImportError:
+    MILITARY_TRACKER_AVAILABLE = False
+    print("[Asia Backend] ⚠️ Military tracker not available")
+
 # In-memory Telegram cache — fetched ONCE per refresh cycle, shared across all country scans
 _telegram_cache = {'messages': [], 'fetched_at': None, 'ttl_seconds': 3600}
 
@@ -1895,10 +1903,41 @@ def home():
             '/api/asia/flights': 'Get Asia-Pacific flight disruptions (cached)',
             '/api/asia/travel-advisories': 'Get State Dept travel advisories',
             '/api/asia/cache-status': 'See cache freshness for all endpoints',
+            '/api/military/posture': 'Full military posture scan (all actors, ?force=true)',
+            '/api/military/posture/<target>': 'Military posture for specific target',
             '/rate-limit': 'Get rate limit status',
             '/health': 'Health check',
         }
     })
+
+
+@app.route('/api/military/posture', methods=['GET'])
+def military_posture():
+    """Full military posture scan across all tracked actors."""
+    if not MILITARY_TRACKER_AVAILABLE:
+        return jsonify({'error': 'Military tracker not available'}), 503
+
+    force = request.args.get('force', 'false').lower() == 'true'
+    days = int(request.args.get('days', 7))
+
+    try:
+        data = scan_military_posture(days=days, force_refresh=force)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/military/posture/<target>', methods=['GET'])
+def military_posture_target(target):
+    """Military posture for a specific target (e.g. china, india, north_korea)."""
+    if not MILITARY_TRACKER_AVAILABLE:
+        return jsonify({'error': 'Military tracker not available'}), 503
+
+    try:
+        data = get_military_posture(target)
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 @app.route('/health', methods=['GET'])
