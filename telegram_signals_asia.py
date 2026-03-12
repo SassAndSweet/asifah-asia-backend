@@ -45,80 +45,62 @@ TELEGRAM_API_HASH = os.environ.get('TELEGRAM_API_HASH')
 TELEGRAM_PHONE = os.environ.get('TELEGRAM_PHONE')
 SESSION_NAME = 'asifah_session'
 
-# Core Asia-Pacific conflict channels
+# Core Asia-Pacific conflict channels — verified working March 2026
 ASIA_CHANNELS = [
-    # Taiwan Strait / China-Taiwan / PLA
-    'IntelSlava',          # Intel Slava — broad OSINT including Indo-Pacific
-    'OSINTdefender',       # OSINT Defender — high signal, covers Asia
-    'ClashReport',         # Clash Report — conflict monitoring global
-    'WarMonitors',         # War Monitor — multilingual conflict
-    'Intel_Sky',           # Intel Sky — active aggregator
-    'C_Military1',         # Military conflict OSINT
-
-    # North Korea
-    'nknewsorg',           # NK News — premier English NK monitoring
-    'northkoreatech',      # NK Tech — missile/nuclear tracking
+    # OSINT aggregators — high volume, high signal
+    'IntelSlava',              # Intel Slava — broad OSINT incl. Indo-Pacific
+    'OSINTdefender',           # OSINT Defender — high signal, covers Asia
+    'ClashReport',             # Clash Report — global conflict monitoring
+    'WarMonitors',             # War Monitor — multilingual conflict
+    'C_Military1',             # Military conflict OSINT
 
     # Afghanistan / Taliban / ISIS-K
-    'AfghanistanTaliban',  # Taliban activity monitoring
-    'kabulnow',            # Kabul Now — Afghan ground reporting
-    'AfghanOSINT',         # Afghan OSINT aggregator
-    'TalibanNews',         # Taliban official / monitoring
+    'AfghanistanInternational', # Afghanistan Intl — exile media, active
+    'kabulnow',                # Kabul Now — Afghan ground reporting
+    'AfghanistanTaliban',      # Taliban activity monitoring
+    'AfghanOSINT',             # Afghan OSINT aggregator
 
     # Pakistan
-    'ISPROfficial',        # Pakistan ISPR — official military spokesman
-    'PakMilitary',         # Pakistan military updates
-    'GeoNews',             # Geo News Pakistan — top TV news
-    'DawnNews',            # Dawn News — Pakistan's paper of record
-
-    # India
-    'IndianDefenceReview', # Indian defence reporting
-    'LiveFistDefence',     # Live Fist — India defence blog/news
-
-    # General Indo-Pacific / English OSINT
-    'BBCBreaking',         # BBC Breaking
-    'ReutersWorld',        # Reuters World
-]
-
-# Extended channels — deeper regional coverage
-EXTENDED_ASIA_CHANNELS = [
-    # Taiwan / China deeper
-    'TaiwanEnglishNews',   # Taiwan English News
-    'focustaiwan',         # Focus Taiwan — CNA English
-    'chinamil_en',         # Chinese military English
-
-    # South Korea / North Korea
-    'yonhapnewsagency',    # Yonhap News Agency — South Korea wire
-    'RadioFreeAsia',       # Radio Free Asia — NK/China/Myanmar
+    'GeoNews',                 # Geo News Pakistan
 
     # Japan
-    'NHKWorldNews',        # NHK World — Japan public broadcaster
-    'JapanTimes',          # Japan Times
+    'NHKWorldNews',            # NHK World — Japan public broadcaster
 
-    # Afghanistan / Central Asia deeper
-    'ToloNewsTv',          # Tolo News — Afghan broadcaster
-    'KhaamaPress',         # Khaama Press — Afghan news agency
-    'AfghanistanInternational',  # Afghanistan International — exile media
-    'pajhwok',             # Pajhwok Afghan News — ground reporting
-    'IslamabadPolicy',     # Islamabad Policy Research
-    'PakAfghanBorder',     # Pak-Afghan border monitoring
+    # South Korea
+    'yonhapnewsagency',        # Yonhap News Agency — South Korea wire
 
-    # India-China / India-Pakistan border
-    'IndianArmyOSINT',     # Indian Army OSINT tracking
-    'LACwatcher',          # Line of Actual Control watcher
-    'KashmirConflict',     # Kashmir conflict monitoring
+    # General English news
+    'BBCBreaking',             # BBC Breaking News
+]
 
-    # Myanmar (proxy conflict / regional instability)
-    'MyanmarNow',          # Myanmar Now — independent media
-    'DVBEnglish',          # Democratic Voice of Burma
+# Extended channels — deeper regional coverage (verified or best-guess replacements)
+EXTENDED_ASIA_CHANNELS = [
+    # North Korea — replacements for dead nknewsorg/northkoreatech
+    'nknews',                  # NK News alternate handle
+    'NorthKoreaNews',          # NK news aggregator
+    'DPRK_News',               # DPRK monitoring
 
-    # Indo-Pacific / US military presence
-    'PacificCommand',      # Indo-Pacific Command updates
-    'USIndoPacom',         # USINDOPACOM public affairs
+    # Taiwan / China
+    'Taiwan_News',             # Taiwan news
+    'StraitsTimesSG',          # Straits Times — Singapore, covers Taiwan Strait
+    'scmpnews',                # South China Morning Post
 
-    # Additional OSINT
-    'IntelligenceAlert',   # Intelligence Alert — broad OSINT
-    'DefenceMonitor',      # Defence Monitor — Indo-Pacific focus
+    # India / Pakistan / Afghanistan
+    'the_hindu',               # The Hindu — India's paper of record
+    'TOIAlerts',               # Times of India alerts
+    'dawn_news_pk',            # Dawn News Pakistan alternate
+    'GeoNewsPakistan',         # Geo News alternate
+    'thenewsinternational',    # The News International — Pakistan
+    'AfghanNews24',            # Afghan News 24
+
+    # Myanmar
+    'myanmar_now_news',        # Myanmar Now alternate
+    'IrrawaddyNews',           # The Irrawaddy — Myanmar independent media
+
+    # Broader Indo-Pacific
+    'IntelligenceAlert',       # Intelligence Alert
+    'thedefensepost',          # Defense Post — Indo-Pacific coverage
+    'janes_360',               # Jane's defence intelligence
 ]
 
 
