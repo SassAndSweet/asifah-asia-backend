@@ -76,9 +76,7 @@ ASIA_CHANNELS = [
 # Extended channels — deeper regional coverage (verified or best-guess replacements)
 EXTENDED_ASIA_CHANNELS = [
     # North Korea — replacements for dead nknewsorg/northkoreatech
-    'nknews',                  # NK News alternate handle
     'NorthKoreaNews',          # NK news aggregator
-    'DPRK_News',               # DPRK monitoring
 
     # Taiwan / China
     'Taiwan_News',             # Taiwan news
@@ -86,21 +84,11 @@ EXTENDED_ASIA_CHANNELS = [
     'scmpnews',                # South China Morning Post
 
     # India / Pakistan / Afghanistan
-    'the_hindu',               # The Hindu — India's paper of record
-    'TOIAlerts',               # Times of India alerts
-    'dawn_news_pk',            # Dawn News Pakistan alternate
-    'GeoNewsPakistan',         # Geo News alternate
     'thenewsinternational',    # The News International — Pakistan
-    'AfghanNews24',            # Afghan News 24
 
     # Myanmar
-    'myanmar_now_news',        # Myanmar Now alternate
-    'IrrawaddyNews',           # The Irrawaddy — Myanmar independent media
 
     # Broader Indo-Pacific
-    'IntelligenceAlert',       # Intelligence Alert
-    'thedefensepost',          # Defense Post — Indo-Pacific coverage
-    'janes_360',               # Jane's defence intelligence
 ]
 
 
