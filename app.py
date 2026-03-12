@@ -1359,6 +1359,30 @@ def add_cors_headers(response):
     response.headers['Access-Control-Allow-Methods'] = 'GET,OPTIONS'
     return response
 
+@app.errorhandler(500)
+def internal_error(e):
+    import traceback
+    tb = traceback.format_exc()
+    print(f"[500 ERROR] {tb}")
+    response = jsonify({'error': 'Internal server error', 'detail': str(e)})
+    response.status_code = 500
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,OPTIONS'
+    return response
+
+@app.errorhandler(Exception)
+def unhandled_exception(e):
+    import traceback
+    tb = traceback.format_exc()
+    print(f"[UNHANDLED EXCEPTION] {tb}")
+    response = jsonify({'error': 'Unhandled exception', 'detail': str(e)})
+    response.status_code = 500
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type,Authorization'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,OPTIONS'
+    return response
+
 
 @app.route('/api/asia/threat/<target>', methods=['GET'])
 def api_asia_threat(target):
