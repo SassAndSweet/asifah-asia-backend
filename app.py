@@ -330,6 +330,18 @@ TRAVEL_ADVISORY_CODES = {
     'taiwan':      ['TW'],
 }
 
+# State Dept country name slug for direct advisory links
+TRAVEL_ADVISORY_SLUGS = {
+    'afghanistan': 'afghanistan',
+    'china':       'china',
+    'india':       'india',
+    'japan':       'japan',
+    'north_korea': 'north-korea-democratic-peoples-republic-of-korea',
+    'pakistan':    'pakistan',
+    'south_korea': 'south-korea-republic-of-korea',
+    'taiwan':      'taiwan',
+}
+
 TRAVEL_ADVISORY_LEVELS = {
     1: {'label': 'Exercise Normal Precautions',    'short': 'Normal Precautions',  'color': '#10b981'},
     2: {'label': 'Exercise Increased Caution',     'short': 'Increased Caution',   'color': '#f59e0b'},
@@ -610,14 +622,22 @@ def parse_pub_date(pub_str):
     """
     Robustly parse a publication date string into a UTC-aware datetime.
     Handles ISO 8601, RFC 2822, and GDELT seendate formats.
-    Returns datetime or None.
+    Always returns a timezone-aware datetime or None.
     """
     if not pub_str:
         return None
+
+    def _make_aware(dt):
+        """Ensure datetime is timezone-aware (UTC)."""
+        if dt is not None and dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt
+
     try:
         # ISO 8601 / RFC 3339 (most common: NewsAPI, Reddit)
-        return datetime.fromisoformat(pub_str.replace('Z', '+00:00'))
-    except ValueError:
+        dt = datetime.fromisoformat(pub_str.replace('Z', '+00:00'))
+        return _make_aware(dt)
+    except (ValueError, AttributeError):
         pass
     try:
         # RFC 2822 (RSS feeds): "Thu, 12 Mar 2026 12:28:03 GMT"
@@ -627,7 +647,7 @@ def parse_pub_date(pub_str):
         pass
     try:
         # GDELT seendate format: "20260312T122803Z" or "20260312122803"
-        clean = pub_str.replace('T', '').replace('Z', '').replace('-', '').replace(':', '')
+        clean = pub_str.replace('T', '').replace('Z', '').replace('-', '').replace(':', '').replace(' ', '')
         if len(clean) >= 14:
             return datetime.strptime(clean[:14], '%Y%m%d%H%M%S').replace(tzinfo=timezone.utc)
         elif len(clean) == 8:
@@ -646,7 +666,7 @@ def fetch_newsapi_articles(query, days=7):
     if not NEWSAPI_KEY:
         return []
     try:
-        from_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+        from_date = (datetime.now(timezone.utc) - timedelta(days=days)).strftime('%Y-%m-%d')
         response = requests.get(
             'https://newsapi.org/v2/everything',
             params={
@@ -1044,13 +1064,28 @@ def _run_travel_advisory_scan():
                     if adv.get('countryCode') in codes:
                         level = adv.get('advisoryLevel', 1)
                         level_info = TRAVEL_ADVISORY_LEVELS.get(level, TRAVEL_ADVISORY_LEVELS[1])
+                        slug = TRAVEL_ADVISORY_SLUGS.get(country, country.replace('_', '-'))
+                        # Check if recently changed (within 30 days)
+                        recently_changed = False
+                        updated_str = adv.get('dateLastUpdated', '')
+                        if updated_str:
+                            try:
+                                from datetime import timezone as tz
+                                updated_dt = datetime.fromisoformat(updated_str.replace('Z', '+00:00'))
+                                delta = datetime.now(timezone.utc) - updated_dt
+                                recently_changed = delta.days <= 30
+                            except Exception:
+                                pass
                         advisories[country] = {
                             'level': level,
-                            'label': level_info['label'],
-                            'short': level_info['short'],
-                            'color': level_info['color'],
-                            'message': adv.get('message', ''),
-                            'updated': adv.get('dateLastUpdated', ''),
+                            'level_label': level_info['label'],
+                            'level_short': level_info['short'],
+                            'level_color': level_info['color'],
+                            'short_summary': adv.get('message', level_info['label']),
+                            'title': f"{country.replace('_',' ').title()} Travel Advisory",
+                            'link': f"https://travel.state.gov/content/travel/en/traveladvisories/traveladvisories/{slug}.html",
+                            'updated': updated_str,
+                            'recently_changed': recently_changed,
                         }
                         break
     except Exception as e:
