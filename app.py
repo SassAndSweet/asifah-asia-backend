@@ -1193,6 +1193,19 @@ def calculate_threat_probability(articles, days=7, target=None):
     now = datetime.now(timezone.utc)
     cutoff = now - timedelta(days=days)
 
+    # Deduplicate articles by URL before scoring to prevent same article
+    # matching multiple keywords and inflating weighted_score
+    seen_urls_score = set()
+    deduped_articles = []
+    for a in articles:
+        url = (a.get('url', '') or a.get('link', '') or '').split('?')[0].rstrip('/')
+        if url and url in seen_urls_score:
+            continue
+        if url:
+            seen_urls_score.add(url)
+        deduped_articles.append(a)
+    articles = deduped_articles
+
     scored_articles = []
     deescalation_keywords = [
         'ceasefire', 'peace talks', 'negotiations', 'diplomacy', 'de-escalation',
@@ -1653,11 +1666,11 @@ def _run_threat_scan(target, days=7):
                 'Afghanistan Analysts Network', weight=0.95))
         except Exception as e:
             print(f"AAN RSS error: {e}")
-        # Dawn direct feed — Pakistan/Afghan cross-border coverage
+        # Dawn — targeted Google News query for Pak-Afghan border stories only
         try:
-            rss_articles.extend(fetch_direct_rss(
-                'https://www.dawn.com/feeds/home',
-                'Dawn (AF)', weight=0.9))
+            rss_articles.extend(fetch_google_news_rss(
+                'Pakistan Afghanistan border OR Durand line OR Pakistan airstrike Afghanistan OR TTP Afghanistan',
+                'Dawn (AF)'))
         except Exception as e:
             print(f"Dawn AF RSS error: {e}")
 
