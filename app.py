@@ -1564,16 +1564,37 @@ def _run_threat_scan(target, days=7):
         try:
             rss_articles.extend(fetch_direct_rss(
                 'https://www.dawn.com/feeds/home',
-                'Dawn', weight=0.9))
+                'Dawn', weight=0.95))
         except Exception as e:
             print(f"Dawn RSS error: {e}")
-        # Geo News
+        # Geo News — major Pakistani broadcaster
         try:
             rss_articles.extend(fetch_direct_rss(
                 'https://www.geo.tv/rss/10',
-                'Geo News', weight=0.8))
+                'Geo News', weight=0.85))
         except Exception as e:
             print(f"Geo News RSS error: {e}")
+        # The News International — solid on military/security
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://www.thenews.com.pk/rss/1/8',
+                'The News International', weight=0.85))
+        except Exception as e:
+            print(f"The News RSS error: {e}")
+        # RFE/RL Gandhara — Pakistan/Afghan borderlands specialist
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://gandhara.rferl.org/api/zrqmilty',
+                'RFE/RL Gandhara (PK)', weight=0.95))
+        except Exception as e:
+            print(f"Gandhara PK RSS error: {e}")
+        # SATP — South Asia Terrorism Portal incident reports
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://www.satp.org/rss/conflict-updates.xml',
+                'SATP Pakistan', weight=0.9))
+        except Exception as e:
+            print(f"SATP RSS error: {e}")
 
     if target == 'afghanistan':
         # Google News — English operational reporting
@@ -1587,23 +1608,58 @@ def _run_threat_scan(target, days=7):
         try:
             rss_articles.extend(fetch_direct_rss(
                 'https://tolonews.com/rss.xml',
-                'Tolo News', weight=0.85))
+                'Tolo News', weight=0.9))
         except Exception as e:
             print(f"Tolo News RSS error: {e}")
         # Khaama Press — Afghan news agency
         try:
             rss_articles.extend(fetch_direct_rss(
                 'https://www.khaama.com/feed/',
-                'Khaama Press', weight=0.85))
+                'Khaama Press', weight=0.9))
         except Exception as e:
             print(f"Khaama Press RSS error: {e}")
-        # Dawn — Pakistan/Afghan cross-border coverage
+        # Pajhwok Afghan News — gold standard ground-level Afghan reporting
         try:
-            rss_articles.extend(fetch_google_news_rss(
-                'Pakistan Afghanistan border attack OR Durand line OR Afghan Taliban Pakistan',
-                'Dawn Pakistan'))
+            rss_articles.extend(fetch_direct_rss(
+                'https://pajhwok.com/feed/',
+                'Pajhwok Afghan News', weight=0.9))
         except Exception as e:
-            print(f"Dawn RSS error: {e}")
+            print(f"Pajhwok RSS error: {e}")
+        # Ariana News — Afghan broadcaster
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://ariananews.af/feed/',
+                'Ariana News', weight=0.85))
+        except Exception as e:
+            print(f"Ariana News RSS error: {e}")
+        # RFE/RL Gandhara — Afghan/Pak borderlands specialist
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://gandhara.rferl.org/api/zrqmilty',
+                'RFE/RL Gandhara', weight=0.95))
+        except Exception as e:
+            print(f"Gandhara RSS error: {e}")
+        # ReliefWeb — UN/NGO humanitarian + security incidents
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://reliefweb.int/country/afg/rss.xml',
+                'ReliefWeb Afghanistan', weight=0.85))
+        except Exception as e:
+            print(f"ReliefWeb RSS error: {e}")
+        # Afghanistan Analysts Network — deep analytical reporting
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://www.afghanistan-analysts.org/feed/',
+                'Afghanistan Analysts Network', weight=0.95))
+        except Exception as e:
+            print(f"AAN RSS error: {e}")
+        # Dawn direct feed — Pakistan/Afghan cross-border coverage
+        try:
+            rss_articles.extend(fetch_direct_rss(
+                'https://www.dawn.com/feeds/home',
+                'Dawn (AF)', weight=0.9))
+        except Exception as e:
+            print(f"Dawn AF RSS error: {e}")
 
     if target == 'india':
         try:
@@ -1677,6 +1733,55 @@ def _run_threat_scan(target, days=7):
         articles_gdelt_ur + articles_gdelt_fa + articles_gdelt_ja +
         articles_reddit + rss_articles + telegram_articles
     )
+
+    # Deduplicate by URL — prevents same article scoring multiple times
+    seen_urls = set()
+    deduped = []
+    for a in all_articles:
+        url = a.get('url', '') or a.get('link', '')
+        # Normalize Google News redirect URLs by their core content
+        if 'news.google.com/rss/articles/' in url:
+            url = url.split('?')[0]  # strip query params
+        if url and url not in seen_urls:
+            seen_urls.add(url)
+            deduped.append(a)
+        elif not url:
+            deduped.append(a)  # keep articles with no URL rather than drop
+    all_articles = deduped
+
+    # Filter soft/cultural noise from community subreddits
+    # These subreddits carry country-name articles with zero security signal
+    NOISE_SUBREDDITS = {
+        'r/afghanistan', 'r/india', 'r/pakistan', 'r/china',
+        'r/japan', 'r/korea', 'r/taiwan',
+    }
+    SECURITY_KEYWORDS_QUICK = {
+        'attack', 'strike', 'bomb', 'blast', 'kill', 'dead', 'casualt',
+        'military', 'troops', 'missile', 'drone', 'armed', 'conflict',
+        'terror', 'militant', 'insurgent', 'war', 'clash', 'skirmish',
+        'border', 'arrest', 'detain', 'sanction', 'nuclear', 'weapon',
+        'explosion', 'shoot', 'fire', 'troops', 'soldier', 'forces',
+    }
+    filtered = []
+    noise_count = 0
+    for a in all_articles:
+        src = a.get('source', {})
+        src_name = (src.get('name', '') if isinstance(src, dict) else str(src)).lower()
+        if src_name in NOISE_SUBREDDITS:
+            # Only keep if title/description contains a security keyword
+            text = (
+                (a.get('title', '') or '') + ' ' +
+                (a.get('description', '') or '')
+            ).lower()
+            if any(kw in text for kw in SECURITY_KEYWORDS_QUICK):
+                filtered.append(a)
+            else:
+                noise_count += 1
+        else:
+            filtered.append(a)
+    if noise_count > 0:
+        print(f"[Asia Scan] Filtered {noise_count} soft/cultural noise articles for {target}")
+    all_articles = filtered
 
     # Score
     scoring_result = calculate_threat_probability(all_articles, days, target)
