@@ -396,6 +396,19 @@ SOURCE_WEIGHTS = {
     }
 }
 
+# ========================================
+# TARGET BASELINES — ASIA-PACIFIC
+# ========================================
+TARGET_BASELINES = {
+    'afghanistan': {'base_adjustment': +18, 'description': 'Active Taliban governance; ISIS-K; Level 4 advisory; no US embassy'},
+    'north_korea': {'base_adjustment': +20, 'description': 'Nuclear state; active provocations; Level 4 advisory; no US embassy'},
+    'pakistan':    {'base_adjustment': +12, 'description': 'TTP insurgency; Iran border strikes; Level 3 advisory'},
+    'taiwan':      {'base_adjustment': +10, 'description': 'Active PLA exercises; strait tensions; Level 2 advisory'},
+    'south_korea': {'base_adjustment': +8,  'description': 'DPRK artillery/nuclear range; DMZ; Level 1 but active threat'},
+    'china':       {'base_adjustment': +8,  'description': 'Regional power competition; SCS disputes; Level 2 advisory'},
+    'india':       {'base_adjustment': +6,  'description': 'Kashmir LoC; China LAC tensions; Level 2 advisory'},
+    'japan':       {'base_adjustment': +4,  'description': 'NK missile overflights; China ADIZ pressure; Level 1'},
+}
 
 # ========================================
 # TARGET KEYWORDS — ASIA-PACIFIC
@@ -1655,7 +1668,8 @@ def _run_threat_scan(target, days=7):
 
     # Score
     scoring_result = calculate_threat_probability(all_articles, days, target)
-    probability = scoring_result['probability']
+    baseline_adjustment = TARGET_BASELINES.get(target, {}).get('base_adjustment', 0)
+    probability = min(99, scoring_result['probability'] + baseline_adjustment)
     momentum = scoring_result['momentum']
     breakdown = scoring_result['breakdown']
 
