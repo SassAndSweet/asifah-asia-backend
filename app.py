@@ -483,6 +483,8 @@ TARGET_KEYWORDS = {
             'india military exercise', 'quad india',
             'india china standoff', 'galwan valley',
             'india pakistan tension', 'india border skirmish',
+            'loc incident', 'loc ceasefire violation', 'kashmir shelling',
+            'kashmir gunfight', 'kashmir encounter', 'bsf pakistan',
         ],
         'reddit_keywords': [
             'india military', 'india pakistan', 'india china',
