@@ -418,7 +418,8 @@ TARGET_KEYWORDS = {
             'pakistan afghanistan border attack', 'pakistan afghan border clash',
             'pakistan military operation afghanistan', 'durand line',
             'pakistan afghanistan tension', 'pak-afghan border',
-            'torkham border', 'khyber pass attack',
+            'torkham border', 'torkham crossing', 'torkham checkpoint',
+            'khyber pass attack', 'khyber pass closure',
             # Taliban ops / instability
             'taliban crackdown', 'taliban execution', 'taliban attack',
             'taliban bomb', 'kabul blast', 'kabul explosion', 'kabul attack',
@@ -439,15 +440,37 @@ TARGET_KEYWORDS = {
         'keywords': [
             'china military', 'pla', 'chinese military', 'peoples liberation army',
             'south china sea', 'taiwan strait', 'china taiwan',
-            'china navy', 'plan warship', 'chinese carrier',
-            'china nuclear', 'china missile', 'df-41', 'df-21',
+            'china navy', 'plan warship', 'chinese carrier', 'plan carrier',
+            'plan exercises', 'pla navy', 'pla air force',
+            'china nuclear', 'china missile', 'df-41', 'df-21', 'df-17',
             'china us military', 'china india border',
             'china air force', 'j-20', 'h-6 bomber',
             'xi jinping military', 'china war',
+            'china adiz', 'china airspace violation',
+            'pla exercise', 'pla drills', 'pla live fire',
+            'china blockade taiwan', 'china taiwan contingency',
+            'chinese warships', 'chinese destroyer', 'chinese frigate',
+            # Iran oil angle — China keeps PLAN assets near Gulf for oil supply protection
+            'china iran oil', 'china iran military', 'china iran naval',
+            'china warships iran', 'china deploys warships', 'chinese warships iran',
+            'warships near iran china', 'plan gulf', 'chinese warship gulf', 'china warship middle east',
+            'china iran energy', 'china oil iran sanctions',
+            'plan indian ocean', 'china djibouti base',
+            'china pakistan gwadar', 'cpec military',
+            # SCS / island disputes
+            'spratly islands', 'paracel islands', 'scarborough shoal',
+            'china philippines', 'china vietnam south sea',
+            'china coast guard', 'china water cannon',
+            # Japan / Senkaku angle
+            'china japan senkaku', 'diaoyu islands',
+            'china japan adiz', 'chinese warship japan',
+            # Korean peninsula — China as NK backer
+            'china north korea', 'china dprk support',
         ],
         'reddit_keywords': [
             'china military', 'pla', 'south china sea', 'taiwan strait',
-            'sino', 'china news',
+            'sino', 'china taiwan', 'pla exercise', 'scs',
+            'china iran', 'plan carrier', 'chinese warship',
         ],
     },
 
@@ -486,44 +509,111 @@ TARGET_KEYWORDS = {
 
     'north_korea': {
         'keywords': [
-            'north korea', 'dprk', 'kim jong un', 'pyongyang',
-            'north korea missile', 'dprk launch', 'icbm',
-            'hwasong', 'north korea nuclear', 'punggye-ri',
-            'north korea troops russia', 'dprk soldiers ukraine',
-            'inter-korean', 'dmz', 'north korea provocation',
+            # Bare country terms — catch anything
+            'north korea', 'dprk', 'pyongyang',
+            # Kim Jong Un — every statement is a signal
+            'kim jong un', 'kim jong-un', 'kim orders', 'kim inspects',
+            'kim threatens', 'kim warns', 'kim vows', 'kim declares',
+            'north korean leader',
+            # Missile / launch events
+            'north korea missile', 'dprk missile', 'north korea launches',
+            'dprk launches', 'north korea fires', 'dprk fires',
+            'north korea ballistic', 'dprk ballistic',
+            'north korea icbm', 'dprk icbm', 'hwasong',
+            'pyongyang fires', 'pyongyang launches',
+            'north korea test', 'dprk test',
+            # Nuclear
+            'north korea nuclear', 'dprk nuclear',
+            'north korea nuclear weapon', 'dprk nuclear warhead',
+            'north korea nuclear test', 'punggye-ri', 'yongbyon',
+            'north korea enrichment', 'north korea tactical nuclear',
+            # State media / official pronouncements
+            'kcna', 'dprk state media', 'korean central news agency',
+            'pyongyang warns', 'pyongyang threatens',
+            'north korea warns', 'north korea threatens', 'north korea vows',
+            # Military activity
+            'north korea artillery', 'north korea drone',
             'north korea submarine', 'dprk hypersonic',
-            'north korea south korea', 'yongbyon',
+            'north korea military exercise', 'north korea provocation',
+            'dprk provocation', 'north korea balloon',
+            'north korea trash balloon',
+            # Troops in Russia — big 2025/2026 story
+            'north korea troops russia', 'dprk soldiers ukraine',
+            'north korea soldiers deployed', 'korean soldiers russia',
+            'north korean troops ukraine',
+            # Inter-Korean / DMZ
+            'inter-korean', 'dmz', 'north korea south korea',
+            'nll violation', 'korean demilitarized zone',
+            'dmz incident',
+            # Korean language signals
+            '북한 미사일', '북한 핵', '김정은', '조선인민군',
+            '북한 도발', '북한 발사', '탄도미사일',
         ],
         'reddit_keywords': [
-            'north korea', 'dprk', 'kim jong un', 'northkorea',
-            'korean peninsula', 'pyongyang',
+            'north korea', 'dprk', 'kim jong un', 'pyongyang',
+            'north korea missile', 'dprk launch', 'icbm launch',
+            'north korea nuclear', 'north korea troops russia',
+            'northkorea', 'korean peninsula',
         ],
     },
 
     'pakistan': {
         'keywords': [
+            # Bare country terms
             'pakistan military', 'pakistan army', 'ispr',
+            # Nuclear / missiles
             'pakistan nuclear', 'shaheen missile', 'nasr missile',
+            'pakistan missile test', 'pakistan ballistic missile',
+            # India-Pakistan / LoC
             'india pakistan', 'line of control', 'kashmir military',
-            'pakistan taliban', 'ttp attack', 'balochistan attack',
-            'pakistan airspace', 'pakistan us military',
-            'pakistan china military', 'cpec security',
-            'pakistan coup', 'pakistan imf crisis',
+            'kashmir insurgency', 'loc ceasefire', 'loc incident',
+            'india pakistan skirmish', 'india pakistan standoff',
+            'pulwama', 'balakot',
+            # TTP — daily signal source
+            'pakistan taliban', 'ttp attack', 'ttp militants',
+            'ttp pakistan', 'tehrik-i-taliban', 'tehrik-e-taliban',
+            'ttp kills', 'ttp ambush', 'ttp soldiers',
+            # Balochistan insurgency
+            'balochistan attack', 'baloch militant',
+            'balochistan liberation army', 'bla attack',
+            'blf attack', 'baloch insurgent',
+            'quetta attack', 'gwadar attack', 'turbat attack',
+            # Iran cross-border — major 2026 story
+            'iran pakistan border', 'iran strikes pakistan',
+            'iran bombs pakistan', 'iran attack pakistan',
+            'iran balochistan', 'iran jaish al-adl',
+            'jaish al-adl', 'jaish al adl',
+            'irgc pakistan', 'iran retaliates pakistan',
+            'pakistan retaliates iran', 'pakistan iran border',
+            'pakistan iran tension', 'pakistan iran standoff',
+            'pakistan closes iran border', 'pakistan iran escalation',
+            'pakistan iran incident', 'pakistan iran drone',
+            'iran fires missiles pakistan', 'iran fires pakistan',
+            'iran fires missiles into', 'iran fires missiles into pakistan',
+            'pakistan-iran border', 'pakistan retaliation iran',
+            'pakistan retaliates', 'pakistan closes iran',
+            'iranian missiles pakistan', 'iranian balochistan',
+            # Pakistan military operations
+            'pakistan army operation', 'pakistan airspace',
+            'pakistan us military', 'pakistan china military',
+            'cpec security', 'gwadar security',
+            'pakistan coup', 'pakistan bomb blast',
+            'pakistan suicide bomb',
             # Cross-border Afghanistan operations — key operational signal
             'pakistan strikes afghanistan', 'pakistan bombs afghanistan',
             'pakistan airstrike afghanistan', 'pakistan shelling afghanistan',
             'pakistan military operation afghanistan', 'pak-afghan border',
-            'pakistan afghanistan border attack', 'durand line dispute',
+            'pakistan afghanistan border attack', 'durand line',
             'afghanistan retaliates pakistan', 'pak-afghan war',
             'pakistan jet afghanistan', 'pakistan bombs khost',
             'pakistan bombs paktika', 'pakistan bombs kunar',
-            # Domestic instability
-            'pakistan army operation', 'ttp pakistan', 'baloch militant',
-            'pakistan bomb blast', 'pakistan suicide bomb',
+            'pakistan bombs nangarhar', 'pakistan bombs bajaur',
         ],
         'reddit_keywords': [
             'pakistan military', 'pakistan army', 'india pakistan',
-            'kashmir', 'pakistan afghanistan', 'ttp', 'pakistan news',
+            'kashmir', 'pakistan afghanistan', 'ttp attack',
+            'balochistan attack', 'iran pakistan border',
+            'pakistan iran', 'jaish al-adl', 'pakistan news',
         ],
     },
 
@@ -600,14 +690,170 @@ NOTAM_REGIONS = {
 # ========================================
 REDDIT_USER_AGENT = "AsifahAnalytics-Asia/1.0.0 (OSINT monitoring tool)"
 REDDIT_SUBREDDITS = {
-    'afghanistan': ['afghanistan', 'geopolitics', 'worldnews', 'CredibleDefense', 'islam'],
-    'china':       ['sino', 'china', 'geopolitics', 'worldnews', 'CredibleDefense', 'taiwan'],
-    'india':       ['india', 'indiandefense', 'geopolitics', 'worldnews', 'CredibleDefense', 'IndiaSpeaks'],
-    'japan':       ['japan', 'japannews', 'geopolitics', 'worldnews', 'CredibleDefense'],
-    'north_korea': ['northkorea', 'geopolitics', 'worldnews', 'CredibleDefense', 'korea'],
-    'pakistan':    ['pakistan', 'geopolitics', 'worldnews', 'CredibleDefense', 'india'],
-    'south_korea': ['korea', 'southkorea', 'geopolitics', 'worldnews', 'CredibleDefense'],
-    'taiwan':      ['taiwan', 'geopolitics', 'worldnews', 'CredibleDefense', 'sino', 'china'],
+    # -------------------------------------------------------
+    # AFGHANISTAN — Taliban ops, TTP, ISIS-K, Pak cross-border
+    # -------------------------------------------------------
+    'afghanistan': [
+        # Core geopolitics / defense — always high signal
+        'geopolitics', 'CredibleDefense', 'worldnews', 'LessCredibleDefence',
+        'WarCollege', 'NCD', 'GlobalPowers', 'OSINT',
+        # The one you thought I'd laugh at — active Asia geopolitics community
+        'anime_titties',
+        # Country-specific
+        'afghanistan', 'Pashtun', 'pakistan',
+        # Regional
+        'SouthAsia', 'CentralAsia',
+        # Conflict tracking
+        'CombatFootage', 'UkraineRussiaReport',
+        # Iran angle (Iran-Pak border, IRGC Jaish al-Adl ops)
+        'iran',
+    ],
+
+    # -------------------------------------------------------
+    # CHINA — PLA, SCS, Taiwan Strait, Iran oil, PLAN deployments
+    # -------------------------------------------------------
+    'china': [
+        # Core
+        'geopolitics', 'CredibleDefense', 'worldnews', 'LessCredibleDefence',
+        'WarCollege', 'NCD', 'GlobalPowers', 'OSINT',
+        'anime_titties',
+        # China-specific
+        'Sino', 'china',
+        # Taiwan / SCS adversaries
+        'taiwan', 'Taiwanese', 'Philippines', 'Vietnam',
+        # Regional
+        'EastAsia', 'AsiaPacific', 'southeast_asia',
+        # Alliance watchers
+        'Australia',
+        # Naval / air
+        'navy', 'AirForce',
+        # Iran oil angle (China-Iran energy)
+        'iran',
+        # Conflict footage for SCS incidents
+        'CombatFootage',
+    ],
+
+    # -------------------------------------------------------
+    # INDIA — LAC, LoC, Pakistan, Quad, Indian Ocean
+    # -------------------------------------------------------
+    'india': [
+        # Core
+        'geopolitics', 'CredibleDefense', 'worldnews', 'LessCredibleDefence',
+        'WarCollege', 'NCD', 'GlobalPowers', 'OSINT',
+        'anime_titties',
+        # India-specific
+        'india', 'IndiaSpeaks', 'IndiaDefence',
+        # Adversary angle
+        'pakistan', 'Sino',
+        # Regional
+        'SouthAsia',
+        # Conflict footage
+        'CombatFootage',
+        # Alliance angle
+        'Australia',
+    ],
+
+    # -------------------------------------------------------
+    # JAPAN — JSDF, Senkaku, NK missile alerts, AUKUS
+    # -------------------------------------------------------
+    'japan': [
+        # Core
+        'geopolitics', 'CredibleDefense', 'worldnews', 'LessCredibleDefence',
+        'WarCollege', 'NCD', 'GlobalPowers', 'OSINT',
+        'anime_titties',
+        # Japan-specific
+        'japan', 'japannews',
+        # Regional / adversary angle
+        'EastAsia', 'AsiaPacific', 'Sino',
+        # North Korea missile alerts
+        'northkorea', 'korea',
+        # Naval / air (7th Fleet, JSDF)
+        'navy', 'AirForce',
+        # Alliance
+        'Australia',
+    ],
+
+    # -------------------------------------------------------
+    # NORTH KOREA — missile launches, nuclear, troops in Russia
+    # -------------------------------------------------------
+    'north_korea': [
+        # Core
+        'geopolitics', 'CredibleDefense', 'worldnews', 'LessCredibleDefence',
+        'WarCollege', 'NCD', 'GlobalPowers', 'OSINT',
+        'anime_titties',
+        # NK-specific
+        'northkorea', 'korea',
+        # Regional
+        'EastAsia', 'AsiaPacific',
+        # NK troops in Ukraine — cross-post source
+        'ukraine', 'UkraineRussiaReport',
+        # Conflict footage (missile launches, border incidents)
+        'CombatFootage',
+        # South Korea existential angle
+        'southkorea',
+    ],
+
+    # -------------------------------------------------------
+    # PAKISTAN — TTP, Balochistan, Iran border, India LoC, nuclear
+    # -------------------------------------------------------
+    'pakistan': [
+        # Core
+        'geopolitics', 'CredibleDefense', 'worldnews', 'LessCredibleDefence',
+        'WarCollege', 'NCD', 'GlobalPowers', 'OSINT',
+        'anime_titties',
+        # Pakistan-specific
+        'pakistan', 'Pashtun',
+        # India angle (LoC, Kashmir)
+        'india', 'IndiaSpeaks',
+        # Afghanistan angle (TTP, cross-border)
+        'afghanistan',
+        # Iran angle (Iran-Pak border strikes, Jaish al-Adl)
+        'iran',
+        # Regional
+        'SouthAsia',
+        # Conflict footage
+        'CombatFootage',
+    ],
+
+    # -------------------------------------------------------
+    # SOUTH KOREA — NK threat, USFK, inter-Korean, NK troops in Russia
+    # -------------------------------------------------------
+    'south_korea': [
+        # Core
+        'geopolitics', 'CredibleDefense', 'worldnews', 'LessCredibleDefence',
+        'WarCollege', 'NCD', 'GlobalPowers', 'OSINT',
+        'anime_titties',
+        # Korea-specific
+        'korea', 'southkorea', 'northkorea',
+        # Regional
+        'EastAsia', 'AsiaPacific',
+        # NK troops in Russia context
+        'ukraine', 'UkraineRussiaReport',
+        # Conflict footage (NK provocations, artillery)
+        'CombatFootage',
+    ],
+
+    # -------------------------------------------------------
+    # TAIWAN — PLA exercises, strait crossings, blockade scenarios
+    # -------------------------------------------------------
+    'taiwan': [
+        # Core
+        'geopolitics', 'CredibleDefense', 'worldnews', 'LessCredibleDefence',
+        'WarCollege', 'NCD', 'GlobalPowers', 'OSINT',
+        'anime_titties',
+        # Taiwan-specific
+        'taiwan', 'Taiwanese',
+        # China angle
+        'Sino', 'china',
+        # Regional — SCS neighbors watch Taiwan closely
+        'EastAsia', 'AsiaPacific', 'Philippines', 'Vietnam',
+        # Alliance watchers
+        'Australia',
+        # Naval (7th Fleet, PLAN)
+        'navy', 'AirForce',
+        # Conflict footage
+        'CombatFootage',
+    ],
 }
 
 
@@ -1411,19 +1657,6 @@ def _run_threat_scan(target, days=7):
     momentum = scoring_result['momentum']
     breakdown = scoring_result['breakdown']
 
-    # Military posture bonus — add to base probability
-    military_posture = {}
-    military_bonus = 0
-    if MILITARY_TRACKER_AVAILABLE:
-        try:
-            military_posture = get_military_posture(target)
-            military_bonus = military_posture.get('military_bonus', 0)
-            if military_bonus > 0:
-                print(f"[Asia Threat] {target}: military bonus +{military_bonus} (alert: {military_posture.get('alert_level','normal')})")
-            probability = min(100, probability + military_bonus)
-        except Exception as e:
-            print(f"[Asia Threat] {target}: military posture error — {str(e)[:80]}")
-
     # Timeline
     if probability < 30:
         timeline = "180+ Days (Low priority)"
@@ -1506,8 +1739,6 @@ def _run_threat_scan(target, days=7):
         'days_analyzed': days,
         'cached_at': datetime.now(timezone.utc).isoformat(),
         'version': '1.0.0-asia',
-        'military_posture': military_posture,
-        'military_bonus': military_bonus,
     }
 
 
