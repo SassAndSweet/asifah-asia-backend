@@ -161,10 +161,14 @@ def save_threat_cache_redis(target, data, days=7):
     key = f"{THREAT_REDIS_PREFIX}{target}_{days}d"
     try:
         payload = json.dumps(data, default=str)
-        _redis_request('POST', f"/set/{key}/{THREAT_CACHE_TTL}", json=payload)
+        # Upstash REST: SET key value EX seconds
+        _redis_request('POST', f"/set/{key}",
+                       data=payload,
+                       params={'EX': THREAT_CACHE_TTL},
+                       headers={"Authorization": f"Bearer {UPSTASH_REDIS_TOKEN}",
+                                "Content-Type": "application/json"})
     except Exception as e:
         print(f"[Redis] Save error: {str(e)[:100]}")
-
 
 def is_threat_cache_fresh_redis(target, days=7):
     """Check if Redis threat cache is fresh. Returns (is_fresh, data)."""
@@ -204,7 +208,11 @@ def save_notam_cache_redis(data):
     """Save NOTAM cache to Redis."""
     try:
         payload = json.dumps(data)
-        _redis_request('POST', f"/set/{NOTAM_REDIS_KEY}/{NOTAM_CACHE_TTL}", json=payload)
+        _redis_request('POST', f"/set/{NOTAM_REDIS_KEY}",
+                       data=payload,
+                       params={'EX': NOTAM_CACHE_TTL},
+                       headers={"Authorization": f"Bearer {UPSTASH_REDIS_TOKEN}",
+                                "Content-Type": "application/json"})
     except Exception as e:
         print(f"[Redis] NOTAM save error: {str(e)[:100]}")
 
@@ -230,7 +238,11 @@ def save_flight_cache_redis(data):
     """Save flight disruption cache to Redis."""
     try:
         payload = json.dumps(data)
-        _redis_request('POST', f"/set/{FLIGHT_REDIS_KEY}/{FLIGHT_CACHE_TTL}", json=payload)
+        _redis_request('POST', f"/set/{FLIGHT_REDIS_KEY}",
+                       data=payload,
+                       params={'EX': FLIGHT_CACHE_TTL},
+                       headers={"Authorization": f"Bearer {UPSTASH_REDIS_TOKEN}",
+                                "Content-Type": "application/json"})
     except Exception as e:
         print(f"[Redis] Flight save error: {str(e)[:100]}")
 
