@@ -135,14 +135,16 @@ def _redis_request(method, path, **kwargs):
         return None
     try:
         url = f"{UPSTASH_REDIS_URL}{path}"
+        # Merge caller headers with auth header — don't pass both separately
+        caller_headers = kwargs.pop('headers', {})
         headers = {"Authorization": f"Bearer {UPSTASH_REDIS_TOKEN}"}
+        headers.update(caller_headers)
         resp = requests.request(method, url, headers=headers, timeout=5, **kwargs)
         if resp.status_code == 200:
             return resp.json()
     except Exception as e:
         print(f"[Redis] Error: {str(e)[:100]}")
     return None
-
 
 def load_threat_cache_redis(target, days=7):
     """Load threat cache from Redis."""
