@@ -2125,18 +2125,35 @@ def api_asia_dashboard():
                     'cache_age_seconds': int(cache_age(cache_key) or 0)
                 }
             else:
-                # Cache cold — return skeleton immediately, background thread will populate
-                cold_count += 1
-                dashboard['countries'][target] = {
-                    'probability': None,
-                    'momentum': 'unknown',
-                    'timeline': 'Awaiting first scan',
-                    'confidence': 'None',
-                    'total_articles': 0,
-                    'flight_disruptions': 0,
-                    'cached': False,
-                    'warming': True
-                }
+                # Try Redis fallback before giving up
+                is_fresh, redis_cached = is_threat_cache_fresh_redis(target, days)
+                if is_fresh and redis_cached:
+                    cache_set(cache_key, redis_cached)  # Warm in-memory from Redis
+                    dashboard['countries'][target] = {
+                        'probability': redis_cached.get('probability', 0),
+                        'momentum': redis_cached.get('momentum', 'stable'),
+                        'timeline': redis_cached.get('timeline', 'Unknown'),
+                        'confidence': redis_cached.get('confidence', 'Low'),
+                        'total_articles': redis_cached.get('total_articles', 0),
+                        'flight_disruptions': len(redis_cached.get('flight_disruptions', [])),
+                        'cached': True,
+                        'cache_source': 'redis',
+                        'cached_at': redis_cached.get('cached_at', None),
+                        'cache_age_seconds': 0
+                    }
+                else:
+                    # Truly cold — return skeleton, background thread will populate
+                    cold_count += 1
+                    dashboard['countries'][target] = {
+                        'probability': None,
+                        'momentum': 'unknown',
+                        'timeline': 'Awaiting first scan',
+                        'confidence': 'None',
+                        'total_articles': 0,
+                        'flight_disruptions': 0,
+                        'cached': False,
+                        'warming': True
+                    }
 
         dashboard['all_cached'] = cold_count == 0
         dashboard['cache_cold'] = cold_count > 0
