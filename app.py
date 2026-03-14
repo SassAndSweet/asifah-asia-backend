@@ -135,7 +135,6 @@ def _redis_request(method, path, **kwargs):
         return None
     try:
         url = f"{UPSTASH_REDIS_URL}{path}"
-        # Merge caller headers with auth header — don't pass both separately
         caller_headers = kwargs.pop('headers', {})
         headers = {"Authorization": f"Bearer {UPSTASH_REDIS_TOKEN}"}
         headers.update(caller_headers)
